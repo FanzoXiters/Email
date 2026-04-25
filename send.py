@@ -2,11 +2,17 @@ from flask import Flask, request, jsonify
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import os
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 
-SEND_EMAIL = "EMAIL_KAMU_BENER"
-SEND_PASSWORD = "APP_PASSWORD_BENER"
+# Gunakan App Password 16 digit di sini
+
+load_dotenv()
+SEND_EMAIL = os.getenv("EMAIL_USER")
+SEND_PASSWORD = os.getenv("EMAIL_PASS")
 
 @app.route("/")
 def home():
@@ -16,9 +22,8 @@ def home():
 def send():
     try:
         data = request.get_json()
-
         if not data:
-            return jsonify({"error": "Body kosong / bukan JSON"}), 400
+            return jsonify({"error": "Content-Type harus application/json"}), 400
 
         name = data.get("name")
         email = data.get("email")
@@ -28,24 +33,28 @@ def send():
         if not all([name, email, subject, body]):
             return jsonify({"error": "Data tidak lengkap"}), 400
 
+        # Setting Email
         message = MIMEMultipart()
         message["From"] = SEND_EMAIL
         message["To"] = email
         message["Subject"] = subject
-
         message.attach(MIMEText(body, "html"))
 
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
-            server.starttls()
+        # Menggunakan SMTP_SSL untuk port 465 (Lebih stabil)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
+            
             server.login(SEND_EMAIL, SEND_PASSWORD)
             server.sendmail(SEND_EMAIL, email, message.as_string())
 
-        return jsonify({"status": True, "msg": "Email terkirim"})
+        return jsonify({"status": True, "msg": f"Email berhasil dikirim ke {email}"})
 
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({"error": "Gagal login. Cek App Password/Email"}), 401
     except Exception as e:
-        print("ERROR:", str(e))  # masuk ke logs
-        return jsonify({"error": str(e)}), 500
-
+        print(f"Detail Error: {str(e)}") # Cek log terminal
+        return jsonify({"error": "Terjadi kesalahan pada server"}), 500
 
 if __name__ == "__main__":
+    # Port 10000 biasanya digunakan di Render.com
     app.run(host="0.0.0.0", port=10000)
+
