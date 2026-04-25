@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 
-# ambil dari environment (WAJIB di set di Railway)
+# ambil dari environment (WAJIB di Railway)
 SEND_EMAIL = os.environ.get("EMAIL_USER")
 SEND_PASSWORD = os.environ.get("EMAIL_PASS")
 
@@ -17,15 +17,22 @@ def home():
 @app.route("/send", methods=["POST"])
 def send():
     try:
-        # 🔐 cek ENV dulu
+        # 🔐 cek ENV
         if not SEND_EMAIL or not SEND_PASSWORD:
-            return jsonify({"status": False, "error": "ENV belum diset"}), 500
+            return jsonify({
+                "status": False,
+                "error": "ENV belum diset (EMAIL_USER / EMAIL_PASS)"
+            }), 500
 
+        # ambil JSON
         data = request.get_json()
 
-        # ❌ kalau body kosong
+        # ❌ kalau kosong
         if not data:
-            return jsonify({"status": False, "error": "Body JSON kosong"}), 400
+            return jsonify({
+                "status": False,
+                "error": "Body JSON kosong"
+            }), 400
 
         # ambil data aman
         name = data.get("name")
@@ -35,7 +42,10 @@ def send():
 
         # ❌ kalau ada yang kosong
         if not all([name, email, subject, body]):
-            return jsonify({"status": False, "error": "Data tidak lengkap"}), 400
+            return jsonify({
+                "status": False,
+                "error": "Data tidak lengkap"
+            }), 400
 
         # ✉️ buat email
         message = MIMEMultipart()
@@ -45,17 +55,24 @@ def send():
 
         message.attach(MIMEText(body, "html"))
 
-        # 🚀 kirim email
+        # 🚀 kirim email via Gmail SMTP
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(SEND_EMAIL, SEND_PASSWORD)
             server.sendmail(SEND_EMAIL, email, message.as_string())
 
-        return jsonify({"status": True, "msg": "Email terkirim"})
+        return jsonify({
+            "status": True,
+            "msg": "Email terkirim"
+        })
 
     except Exception as e:
-        return jsonify({"status": False, "error": str(e)}), 500
+        return jsonify({
+            "status": False,
+            "error": str(e)
+        }), 500
 
 
+# 🚀 RUN SERVER (WAJIB buat Railway)
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)000)
+    app.run(host="0.0.0.0", port=10000)
