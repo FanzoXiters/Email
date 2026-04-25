@@ -55,6 +55,6 @@ def send():
         return jsonify({"error": "Terjadi kesalahan pada server"}), 500
 
 if __name__ == "__main__":
-    # Port 10000 biasanya digunakan di Render.com
-    app.run(host="0.0.0.0", port=10000)
-
+    # Mengambil port dari Railway, jika tidak ada default ke 5000
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
