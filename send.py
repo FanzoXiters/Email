@@ -5,8 +5,8 @@ from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 
-SEND_EMAIL = "cikazoexe@gmail.com"
-SEND_PASSWORD = "APP_PASSWORD_KAMU"
+SEND_EMAIL = "EMAIL_KAMU_BENER"
+SEND_PASSWORD = "APP_PASSWORD_BENER"
 
 @app.route("/")
 def home():
@@ -17,13 +17,16 @@ def send():
     try:
         data = request.get_json()
 
+        if not data:
+            return jsonify({"error": "Body kosong / bukan JSON"}), 400
+
         name = data.get("name")
         email = data.get("email")
         subject = data.get("subject")
         body = data.get("body")
 
         if not all([name, email, subject, body]):
-            return jsonify({"error": "data tidak lengkap"}), 400
+            return jsonify({"error": "Data tidak lengkap"}), 400
 
         message = MIMEMultipart()
         message["From"] = SEND_EMAIL
@@ -32,14 +35,15 @@ def send():
 
         message.attach(MIMEText(body, "html"))
 
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
             server.starttls()
             server.login(SEND_EMAIL, SEND_PASSWORD)
             server.sendmail(SEND_EMAIL, email, message.as_string())
 
-        return jsonify({"status": True})
+        return jsonify({"status": True, "msg": "Email terkirim"})
 
     except Exception as e:
+        print("ERROR:", str(e))  # masuk ke logs
         return jsonify({"error": str(e)}), 500
 
 
