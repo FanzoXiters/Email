@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart 
 send_email = "cikazoexe@gmail.com
 #Enter here gmail account app password
-send_password = "gmail account app password "
+send_password = "gkht vvds qnmn cnrf"
 
 app = Flask(__name__)
 @app.route("/send", methods=["POST"])
